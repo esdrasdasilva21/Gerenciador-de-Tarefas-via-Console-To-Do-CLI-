@@ -62,6 +62,35 @@ while (executando)
             }
             break;
 
+
+            // Adicione a opção "3 - Remover tarefa" no menu e trate no switch:
+case "3":
+    if (tarefas.Count == 0)
+    {
+        Console.WriteLine("Não há tarefas para remover.");
+        break;
+    }
+
+    for (int i = 0; i < tarefas.Count; i++)
+    {
+        Console.WriteLine($"{i + 1}. {tarefas[i]}");
+    }
+
+    Console.Write("Digite o número da tarefa para remover: ");
+    string? entradaNumero = Console.ReadLine();
+
+    if (int.TryParse(entradaNumero, out int numero) && numero >= 1 && numero <= tarefas.Count)
+    {
+        string removida = tarefas[numero - 1];
+        tarefas.RemoveAt(numero - 1);
+        Console.WriteLine($"Tarefa \"{removida}\" removida.");
+    }
+    else
+    {
+        Console.WriteLine("Número inválido.");
+    }
+    break;
+
         case "0":
             executando = false;
             Console.WriteLine("Até logo!");
