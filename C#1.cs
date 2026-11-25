@@ -160,6 +160,50 @@ case "6":
         }
     }
     break;
+
+    // No menu:
+Console.WriteLine("7 - Ordenar tarefas");
+
+// No switch:
+case "7":
+    if (tarefas.Count == 0)
+    {
+        Console.WriteLine("Nenhuma tarefa para ordenar.");
+        break;
+    }
+
+    Console.WriteLine("1 - Por prioridade (Alta -> Baixa)");
+    Console.WriteLine("2 - Por status (Pendentes primeiro)");
+    Console.Write("Escolha a ordenação: ");
+    string? ordem = Console.ReadLine();
+
+    IEnumerable<TarefaItem> ordenadas = ordem switch
+    {
+        "1" => tarefas
+            .OrderByDescending(t => t.Prioridade)
+            .ThenBy(t => t.Id),
+        "2" => tarefas
+            .OrderBy(t => t.Concluida)
+            .ThenByDescending(t => t.Prioridade),
+        _ => Enumerable.Empty<TarefaItem>()
+    };
+
+    List<TarefaItem> listaOrdenada = ordenadas.ToList();
+
+    if (listaOrdenada.Count == 0)
+    {
+        Console.WriteLine("Opção de ordenação inválida.");
+    }
+    else
+    {
+        Console.WriteLine("\nTarefas ordenadas:");
+        foreach (TarefaItem item in listaOrdenada)
+        {
+            Console.WriteLine(item);
+        }
+    }
+    break;
+    
     break;
 
         case "0":
