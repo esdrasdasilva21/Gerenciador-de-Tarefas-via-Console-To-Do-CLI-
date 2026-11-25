@@ -1,7 +1,7 @@
 using TodoCli;
 
 const string nomeApp = "TaskFlow C#";
-const string versao = "1.0";
+const string versao = "1.2";
 
 Console.WriteLine($"=== {nomeApp} (v{versao}) ===");
 Console.Write("Digite seu nome: ");
@@ -14,62 +14,54 @@ if (string.IsNullOrWhiteSpace(nomeUsuario))
 
 Console.WriteLine($"Olá, {nomeUsuario}! Vamos organizar suas tarefas.");
 
-RepositorioTarefas repositorio = new();
-List<TarefaItem> tarefas = CarregarTarefasSeguras(repositorio);
+IRepositorioTarefas repositorio = new RepositorioTarefas();
+ServicoTarefas servico = new(repositorio);
 
-if (tarefas.Count == 0)
-{
-    tarefas.AddRange(new[]
-    {
-        new TarefaItem(1, "Estudar sintaxe básica de C#", PrioridadeTarefa.Alta),
-        new TarefaItem(2, "Configurar o ambiente .NET", PrioridadeTarefa.Media)
-    });
-    SalvarTarefasSeguras(repositorio, tarefas);
-}
-
-int proximoId = tarefas.Count > 0 ? tarefas.Max(t => t.Id) + 1 : 1;
 bool executando = true;
 
 while (executando)
 {
+    ExibirResumo(servico);
     ExibirMenu();
     string? opcao = Console.ReadLine()?.Trim();
 
     switch (opcao)
     {
         case "1":
-            ListarTarefas(tarefas);
+            ExibirLista("Suas tarefas", servico.ListarTodas());
             break;
         case "2":
-            AdicionarTarefa(tarefas, ref proximoId);
-            SalvarTarefasSeguras(repositorio, tarefas);
+            FluxoAdicionar(servico);
             break;
         case "3":
-            RemoverTarefa(tarefas);
-            SalvarTarefasSeguras(repositorio, tarefas);
+            FluxoRemover(servico);
             break;
         case "4":
-            AlternarConclusao(tarefas);
-            SalvarTarefasSeguras(repositorio, tarefas);
+            FluxoAlternarConclusao(servico);
             break;
         case "5":
-            FiltrarTarefas(tarefas);
+            FluxoFiltrar(servico);
             break;
         case "6":
-            BuscarPorPalavraChave(tarefas);
+            FluxoBuscar(servico);
             break;
         case "7":
-            OrdenarTarefas(tarefas);
+            FluxoOrdenar(servico);
             break;
         case "0":
-            SalvarTarefasSeguras(repositorio, tarefas);
             executando = false;
-            Console.WriteLine("Até logo! Suas tarefas foram salvas.");
+            Console.WriteLine("Até logo!");
             break;
         default:
             Console.WriteLine("Opção inválida. Tente novamente.");
             break;
     }
+}
+
+static void ExibirResumo(ServicoTarefas servico)
+{
+    var resumo = servico.ObterResumo();
+    Console.WriteLine($"\nResumo: {resumo.Concluidas}/{resumo.Total} concluídas | {resumo.Atrasadas} atrasada(s)");
 }
 
 static void ExibirMenu()
@@ -79,29 +71,31 @@ static void ExibirMenu()
     Console.WriteLine("2 - Adicionar tarefa");
     Console.WriteLine("3 - Remover tarefa");
     Console.WriteLine("4 - Concluir / reabrir tarefa");
-    Console.WriteLine("5 - Filtrar tarefas (pendentes / concluídas)");
+    Console.WriteLine("5 - Filtrar tarefas");
     Console.WriteLine("6 - Buscar por palavra-chave");
     Console.WriteLine("7 - Ordenar tarefas");
     Console.WriteLine("0 - Sair");
     Console.Write("Escolha uma opção: ");
 }
 
-static void ListarTarefas(List<TarefaItem> tarefas)
+static void ExibirLista(string titulo, IEnumerable<TarefaItem> itens)
 {
-    Console.WriteLine("\nSuas tarefas:");
-    if (tarefas.Count == 0)
+    List<TarefaItem> lista = itens.ToList();
+    Console.WriteLine($"\n{titulo}:");
+
+    if (lista.Count == 0)
     {
-        Console.WriteLine("Nenhuma tarefa cadastrada.");
+        Console.WriteLine("Nenhuma tarefa encontrada.");
         return;
     }
 
-    foreach (TarefaItem tarefa in tarefas)
+    foreach (TarefaItem item in lista)
     {
-        Console.WriteLine(tarefa);
+        Console.WriteLine(item);
     }
 }
 
-static void AdicionarTarefa(List<TarefaItem> tarefas, ref int proximoId)
+static void FluxoAdicionar(ServicoTarefas servico)
 {
     Console.Write("Digite o título da nova tarefa: ");
     string? titulo = Console.ReadLine();
@@ -113,195 +107,139 @@ static void AdicionarTarefa(List<TarefaItem> tarefas, ref int proximoId)
     }
 
     Console.Write("Prioridade (1 - Baixa, 2 - Média, 3 - Alta) [padrão 2]: ");
-    string? entradaPrioridade = Console.ReadLine();
-
-    PrioridadeTarefa prioridade = entradaPrioridade switch
+    PrioridadeTarefa prioridade = Console.ReadLine() switch
     {
         "1" => PrioridadeTarefa.Baixa,
         "3" => PrioridadeTarefa.Alta,
         _ => PrioridadeTarefa.Media
     };
 
-    tarefas.Add(new TarefaItem(proximoId, titulo.Trim(), prioridade));
-    proximoId++;
-    Console.WriteLine($"Tarefa adicionada com prioridade {prioridade}!");
-}
+    Console.Write("Categoria [padrão Geral]: ");
+    string? categoriaEntrada = Console.ReadLine();
+    string categoria = string.IsNullOrWhiteSpace(categoriaEntrada) ? "Geral" : categoriaEntrada.Trim();
 
-static void RemoverTarefa(List<TarefaItem> tarefas)
-{
-    if (tarefas.Count == 0)
+    Console.Write("Data limite (dd/MM/yyyy) ou Enter para sem prazo: ");
+    string? dataEntrada = Console.ReadLine();
+    DateOnly? dataLimite = null;
+
+    if (!string.IsNullOrWhiteSpace(dataEntrada))
     {
-        Console.WriteLine("Não há tarefas para remover.");
-        return;
+        if (DateOnly.TryParseExact(
+            dataEntrada.Trim(),
+            new[] { "dd/MM/yyyy", "yyyy-MM-dd" },
+            out DateOnly dataConvertida))
+        {
+            dataLimite = dataConvertida;
+        }
+        else
+        {
+            Console.WriteLine("Data inválida. Salvando sem data limite.");
+        }
     }
 
+    TarefaItem criada = servico.Adicionar(titulo, prioridade, categoria, dataLimite);
+    Console.WriteLine($"Tarefa #{criada.Id} adicionada!");
+}
+
+static void FluxoRemover(ServicoTarefas servico)
+{
     Console.Write("Digite o ID da tarefa para remover: ");
-    string? entradaId = Console.ReadLine();
-
-    if (!int.TryParse(entradaId, out int idRemover))
+    if (!int.TryParse(Console.ReadLine(), out int id))
     {
         Console.WriteLine("ID inválido.");
         return;
     }
 
-    TarefaItem? alvo = tarefas.FirstOrDefault(t => t.Id == idRemover);
-    if (alvo is null)
-    {
-        Console.WriteLine("Tarefa não encontrada.");
-        return;
-    }
-
-    tarefas.Remove(alvo);
-    Console.WriteLine($"Tarefa #{alvo.Id} (\"{alvo.Titulo}\") removida.");
+    Console.WriteLine(servico.RemoverPorId(id)
+        ? $"Tarefa #{id} removida."
+        : "Tarefa não encontrada.");
 }
 
-static void AlternarConclusao(List<TarefaItem> tarefas)
+static void FluxoAlternarConclusao(ServicoTarefas servico)
 {
-    if (tarefas.Count == 0)
-    {
-        Console.WriteLine("Nenhuma tarefa cadastrada.");
-        return;
-    }
-
     Console.Write("Digite o ID da tarefa para alternar conclusão: ");
-    string? entradaToggle = Console.ReadLine();
-
-    if (!int.TryParse(entradaToggle, out int idToggle))
+    if (!int.TryParse(Console.ReadLine(), out int id))
     {
         Console.WriteLine("ID inválido.");
         return;
     }
 
-    TarefaItem? tarefa = tarefas.FirstOrDefault(t => t.Id == idToggle);
-    if (tarefa is null)
+    TarefaItem? atualizada = servico.AlternarConclusao(id);
+    if (atualizada is null)
     {
         Console.WriteLine("Tarefa não encontrada.");
         return;
     }
 
-    tarefa.Concluida = !tarefa.Concluida;
-    string estado = tarefa.Concluida ? "concluída" : "pendente";
-    Console.WriteLine($"Tarefa #{tarefa.Id} agora está marcada como {estado}.");
+    string estado = atualizada.Concluida ? "concluída" : "pendente";
+    Console.WriteLine($"Tarefa #{atualizada.Id} agora está {estado}.");
 }
 
-static void FiltrarTarefas(List<TarefaItem> tarefas)
+static void FluxoFiltrar(ServicoTarefas servico)
 {
     Console.WriteLine("1 - Apenas pendentes");
     Console.WriteLine("2 - Apenas concluídas");
+    Console.WriteLine("3 - Apenas atrasadas");
+    Console.WriteLine("4 - Por categoria");
     Console.Write("Escolha o filtro: ");
-    string? filtro = Console.ReadLine();
 
-    IEnumerable<TarefaItem> consulta = filtro switch
+    switch (Console.ReadLine()?.Trim())
     {
-        "1" => tarefas.Where(t => !t.Concluida),
-        "2" => tarefas.Where(t => t.Concluida),
-        _ => Enumerable.Empty<TarefaItem>()
-    };
-
-    if (filtro is not ("1" or "2"))
-    {
-        Console.WriteLine("Filtro inválido.");
-        return;
-    }
-
-    List<TarefaItem> resultado = consulta.ToList();
-    if (resultado.Count == 0)
-    {
-        Console.WriteLine("Nenhuma tarefa encontrada para esse filtro.");
-        return;
-    }
-
-    Console.WriteLine("\nResultado:");
-    foreach (TarefaItem item in resultado)
-    {
-        Console.WriteLine(item);
+        case "1":
+            ExibirLista("Tarefas pendentes", servico.FiltrarPendentes());
+            break;
+        case "2":
+            ExibirLista("Tarefas concluídas", servico.FiltrarConcluidas());
+            break;
+        case "3":
+            ExibirLista("Tarefas atrasadas", servico.FiltrarAtrasadas());
+            break;
+        case "4":
+            Console.Write("Digite a categoria: ");
+            string? categoria = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(categoria))
+            {
+                Console.WriteLine("Categoria inválida.");
+                return;
+            }
+            ExibirLista($"Categoria: {categoria.Trim()}", servico.FiltrarPorCategoria(categoria));
+            break;
+        default:
+            Console.WriteLine("Filtro inválido.");
+            break;
     }
 }
 
-static void BuscarPorPalavraChave(List<TarefaItem> tarefas)
+static void FluxoBuscar(ServicoTarefas servico)
 {
-    Console.Write("Digite a palavra ou trecho para buscar: ");
+    Console.Write("Digite a palavra-chave: ");
     string? termo = Console.ReadLine();
 
     if (string.IsNullOrWhiteSpace(termo))
     {
-        Console.WriteLine("Digite um termo válido para busca.");
+        Console.WriteLine("Termo de busca inválido.");
         return;
     }
 
-    string termoLimpo = termo.Trim();
-    List<TarefaItem> encontradas = tarefas
-        .Where(t => t.Titulo.Contains(termoLimpo, StringComparison.OrdinalIgnoreCase))
-        .ToList();
-
-    if (encontradas.Count == 0)
-    {
-        Console.WriteLine($"Nenhuma tarefa contém \"{termoLimpo}\".");
-        return;
-    }
-
-    Console.WriteLine($"\nTarefas encontradas para \"{termoLimpo}\":");
-    foreach (TarefaItem item in encontradas)
-    {
-        Console.WriteLine(item);
-    }
+    ExibirLista($"Resultados para \"{termo.Trim()}\"", servico.BuscarPorPalavraChave(termo));
 }
 
-static void OrdenarTarefas(List<TarefaItem> tarefas)
+static void FluxoOrdenar(ServicoTarefas servico)
 {
-    if (tarefas.Count == 0)
-    {
-        Console.WriteLine("Nenhuma tarefa para ordenar.");
-        return;
-    }
-
     Console.WriteLine("1 - Por prioridade (Alta -> Baixa)");
-    Console.WriteLine("2 - Por status (Pendentes primeiro)");
+    Console.WriteLine("2 - Por status e prioridade");
     Console.Write("Escolha a ordenação: ");
-    string? ordem = Console.ReadLine();
 
-    IEnumerable<TarefaItem> consulta = ordem switch
+    switch (Console.ReadLine()?.Trim())
     {
-        "1" => tarefas.OrderByDescending(t => t.Prioridade).ThenBy(t => t.Id),
-        "2" => tarefas.OrderBy(t => t.Concluida).ThenByDescending(t => t.Prioridade),
-        _ => Enumerable.Empty<TarefaItem>()
-    };
-
-    List<TarefaItem> ordenadas = consulta.ToList();
-    if (ordenadas.Count == 0)
-    {
-        Console.WriteLine("Opção de ordenação inválida.");
-        return;
-    }
-
-    Console.WriteLine("\nTarefas ordenadas:");
-    foreach (TarefaItem item in ordenadas)
-    {
-        Console.WriteLine(item);
-    }
-}
-
-static List<TarefaItem> CarregarTarefasSeguras(RepositorioTarefas repositorio)
-{
-    try
-    {
-        return repositorio.Carregar();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Aviso: não foi possível carregar o arquivo de tarefas ({ex.Message}). Iniciando lista vazia.");
-        return new List<TarefaItem>();
-    }
-}
-
-static void SalvarTarefasSeguras(RepositorioTarefas repositorio, List<TarefaItem> tarefas)
-{
-    try
-    {
-        repositorio.Salvar(tarefas);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Erro ao salvar tarefas no disco: {ex.Message}");
+        case "1":
+            ExibirLista("Ordenadas por prioridade", servico.OrdenarPorPrioridade());
+            break;
+        case "2":
+            ExibirLista("Ordenadas por status e prioridade", servico.OrdenarPorStatusEPrioridade());
+            break;
+        default:
+            Console.WriteLine("Opção de ordenação inválida.");
+            break;
     }
 }
