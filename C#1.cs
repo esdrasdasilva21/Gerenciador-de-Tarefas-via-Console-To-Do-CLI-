@@ -126,6 +126,40 @@ case "5":
             Console.WriteLine(item);
         }
     }
+
+
+    // No menu:
+Console.WriteLine("6 - Buscar por palavra-chave");
+
+// No switch:
+case "6":
+    Console.Write("Digite a palavra ou trecho para buscar: ");
+    string? termo = Console.ReadLine();
+
+    if (string.IsNullOrWhiteSpace(termo))
+    {
+        Console.WriteLine("Digite um termo válido para busca.");
+        break;
+    }
+
+    string termoLimpo = termo.Trim();
+    List<TarefaItem> encontradas = tarefas
+        .Where(t => t.Titulo.Contains(termoLimpo, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    if (encontradas.Count == 0)
+    {
+        Console.WriteLine($"Nenhuma tarefa contém \"{termoLimpo}\".");
+    }
+    else
+    {
+        Console.WriteLine($"\nTarefas encontradas para \"{termoLimpo}\":");
+        foreach (TarefaItem item in encontradas)
+        {
+            Console.WriteLine(item);
+        }
+    }
+    break;
     break;
 
         case "0":
