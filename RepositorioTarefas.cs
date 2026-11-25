@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace TodoCli;
 
-public class RepositorioTarefas
+public class RepositorioTarefas : IRepositorioTarefas
 {
     private readonly string _caminhoArquivo;
     private readonly JsonSerializerOptions _opcoesJson;
