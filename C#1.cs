@@ -91,6 +91,43 @@ case "3":
     }
     break;
 
+    // No menu:
+Console.WriteLine("5 - Filtrar tarefas (pendentes / concluídas)");
+
+// No switch:
+case "5":
+    Console.WriteLine("1 - Apenas pendentes");
+    Console.WriteLine("2 - Apenas concluídas");
+    Console.Write("Escolha o filtro: ");
+    string? filtro = Console.ReadLine();
+
+    IEnumerable<TarefaItem> filtradas = filtro switch
+    {
+        "1" => tarefas.Where(t => !t.Concluida),
+        "2" => tarefas.Where(t => t.Concluida),
+        _ => Enumerable.Empty<TarefaItem>()
+    };
+
+    List<TarefaItem> resultadoFiltro = filtradas.ToList();
+
+    if (filtro is not ("1" or "2"))
+    {
+        Console.WriteLine("Filtro inválido.");
+    }
+    else if (resultadoFiltro.Count == 0)
+    {
+        Console.WriteLine("Nenhuma tarefa encontrada para esse filtro.");
+    }
+    else
+    {
+        Console.WriteLine("\nResultado:");
+        foreach (TarefaItem item in resultadoFiltro)
+        {
+            Console.WriteLine(item);
+        }
+    }
+    break;
+
         case "0":
             executando = false;
             Console.WriteLine("Até logo!");
