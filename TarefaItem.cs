@@ -96,7 +96,39 @@ while (executando)
             }
             break;
 
-            
+            // No menu:
+Console.WriteLine("4 - Concluir / reabrir tarefa");
+
+// No switch:
+case "4":
+    if (tarefas.Count == 0)
+    {
+        Console.WriteLine("Nenhuma tarefa cadastrada.");
+        break;
+    }
+
+    Console.Write("Digite o ID da tarefa para alternar conclusão: ");
+    string? entradaToggle = Console.ReadLine();
+
+    if (int.TryParse(entradaToggle, out int idToggle))
+    {
+        TarefaItem? tarefa = tarefas.FirstOrDefault(t => t.Id == idToggle);
+        if (tarefa is not null)
+        {
+            tarefa.Concluida = !tarefa.Concluida;
+            string estadoAtual = tarefa.Concluida ? "concluída" : "pendente";
+            Console.WriteLine($"Tarefa #{tarefa.Id} agora está marcada como {estadoAtual}.");
+        }
+        else
+        {
+            Console.WriteLine("Tarefa não encontrada.");
+        }
+    }
+    else
+    {
+        Console.WriteLine("ID inválido.");
+    }
+    break;
 
         case "0":
             executando = false;
