@@ -1,5 +1,9 @@
-string nomeApp = "TaskFlow C#";
-string versao = "0.1";
+Console.Write("Digite seu nome: ");
+string? nomeUsuario = Console.ReadLine();
 
-Console.WriteLine($"=== {nomeApp} (v{versao}) ===");
-Console.WriteLine("Bem-vindo ao seu projeto de prática em C#!");
+if (string.IsNullOrWhiteSpace(nomeUsuario))
+{
+    nomeUsuario = "Desenvolvedor";
+}
+
+Console.WriteLine($"Olá, {nomeUsuario}! Vamos organizar suas tarefas.\n");
