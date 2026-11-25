@@ -1,9 +1,11 @@
-Console.Write("Digite seu nome: ");
-string? nomeUsuario = Console.ReadLine();
-
-if (string.IsNullOrWhiteSpace(nomeUsuario))
+List<string> tarefas = new()
 {
-    nomeUsuario = "Desenvolvedor";
-}
+    "Estudar sintaxe básica de C#",
+    "Configurar o ambiente .NET"
+};
 
-Console.WriteLine($"Olá, {nomeUsuario}! Vamos organizar suas tarefas.\n");
+Console.WriteLine("Tarefas iniciais:");
+foreach (string tarefa in tarefas)
+{
+    Console.WriteLine($"- {tarefa}");
+}
