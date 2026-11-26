@@ -1,12 +1,16 @@
+using System.Globalization;
 using System.Text;
 
 namespace TodoCli;
 
-public class TarefaItem
+public class TarefaItem : IEquatable<TarefaItem>
 {
+    private static readonly CultureInfo PtBr = new("pt-BR");
+
     private int _id;
     private string _titulo = string.Empty;
     private string _categoria = "Geral";
+    private readonly TimeProvider _timeProvider;
 
     public int Id
     {
@@ -37,9 +41,12 @@ public class TarefaItem
 
     public DateOnly? DataLimite { get; set; }
 
-    public bool EstaAtrasada => EstaAtrasadaEm(DateOnly.FromDateTime(DateTime.Today));
+    public bool EstaAtrasada => EstaAtrasadaEm(Hoje());
 
-    public TarefaItem() { }
+    public TarefaItem(TimeProvider? timeProvider = null)
+    {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
 
     public TarefaItem(
         int id,
@@ -47,7 +54,8 @@ public class TarefaItem
         PrioridadeTarefa prioridade = PrioridadeTarefa.Media,
         string categoria = "Geral",
         DateOnly? dataLimite = null,
-        bool concluida = false)
+        bool concluida = false,
+        TimeProvider? timeProvider = null) : this(timeProvider)
     {
         Id = id;
         Titulo = titulo;
@@ -57,20 +65,33 @@ public class TarefaItem
         Concluida = concluida;
     }
 
+    public DateOnly Hoje() =>
+        DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
+
     public bool EstaAtrasadaEm(DateOnly dataReferencia) =>
         !Concluida && DataLimite.HasValue && DataLimite.Value < dataReferencia;
 
     public void MarcarComoConcluida() => Concluida = true;
-
     public void Reabrir() => Concluida = false;
 
-    public void AdiarPara(DateOnly novaDataLimite)
+    public void AtualizarDetalhes(string titulo, PrioridadeTarefa prioridade, string categoria, DateOnly? dataLimite)
     {
-        if (DataLimite.HasValue && novaDataLimite < DataLimite.Value)
-            throw new ArgumentException("A nova data limite não pode ser anterior à data atual.", nameof(novaDataLimite));
-
-        DataLimite = novaDataLimite;
+        Titulo = titulo;
+        Prioridade = prioridade;
+        Categoria = categoria;
+        DataLimite = dataLimite;
     }
+
+    public bool Equals(TarefaItem? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Id != 0 && Id == other.Id;
+    }
+
+    public override bool Equals(object? obj) => Equals(obj as TarefaItem);
+
+    public override int GetHashCode() => Id != 0 ? Id.GetHashCode() : HashCode.Combine(Titulo, Categoria, DataLimite);
 
     public override string ToString()
     {
@@ -79,7 +100,7 @@ public class TarefaItem
         sb.Append($" #{Id} [{Prioridade}] ({Categoria}) - {Titulo}");
 
         if (DataLimite.HasValue)
-            sb.Append($" | Prazo: {DataLimite.Value:dd/MM/yyyy}");
+            sb.Append($" | Prazo: {DataLimite.Value.ToString("dd/MM/yyyy", PtBr)}");
 
         if (EstaAtrasada)
             sb.Append(" [ATRASADA]");
