@@ -2,11 +2,26 @@ namespace TodoCli;
 
 public class TarefaItem
 {
+    private string _titulo = string.Empty;
+    private string _categoria = "Geral";
+
     public int Id { get; set; }
-    public string Titulo { get; set; } = string.Empty;
+
+    public string Titulo
+    {
+        get => _titulo;
+        set => _titulo = value?.Trim() ?? string.Empty;
+    }
+
     public bool Concluida { get; set; }
     public PrioridadeTarefa Prioridade { get; set; } = PrioridadeTarefa.Media;
-    public string Categoria { get; set; } = "Geral";
+
+    public string Categoria
+    {
+        get => _categoria;
+        set => _categoria = string.IsNullOrWhiteSpace(value) ? "Geral" : value.Trim();
+    }
+
     public DateOnly? DataLimite { get; set; }
 
     public bool EstaAtrasada =>
@@ -27,7 +42,7 @@ public class TarefaItem
         Id = id;
         Titulo = titulo;
         Prioridade = prioridade;
-        Categoria = string.IsNullOrWhiteSpace(categoria) ? "Geral" : categoria.Trim();
+        Categoria = categoria;
         DataLimite = dataLimite;
         Concluida = concluida;
     }
