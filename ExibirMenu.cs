@@ -2,22 +2,33 @@ static void ExibirResumo(IEnumerable<TarefaItem>? tarefas)
 {
     if (tarefas is null)
     {
-        Console.WriteLine("\nResumo: lista indisponível.");
+        Console.WriteLine("\nResumo: nenhuma tarefa para exibir.");
         return;
     }
 
     int total = 0;
     int concluidas = 0;
     int atrasadas = 0;
+    int pendentes = 0;
 
-    foreach (var tarefa in tarefas)
+    foreach (var t in tarefas)
     {
-        if (tarefa is null) continue;
+        if (t is null) continue;
         total++;
-        if (tarefa.Concluida) concluidas++;
-        if (tarefa.EstaAtrasada) atrasadas++;
+
+        if (t.Concluida)
+            concluidas++;
+        else if (t.EstaAtrasada)
+            atrasadas++;
+        else
+            pendentes++;
     }
 
-    double percentual = total > 0 ? (double)concluidas / total * 100 : 0;
-    Console.WriteLine($"\nResumo: {concluidas}/{total} ({percentual:F0}%) concluídas | {atrasadas} atrasada(s)");
+    double percentual = total > 0 ? (concluidas * 100.0) / total : 0;
+
+    Console.WriteLine();
+    Console.WriteLine($"Resumo ({total} tarefa(s) - {percentual:0.#}% concluído):");
+    Console.WriteLine($"  Concluídas : {concluidas}");
+    Console.WriteLine($"  Pendentes  : {pendentes}");
+    Console.WriteLine($"  Atrasadas  : {atrasadas}");
 }
