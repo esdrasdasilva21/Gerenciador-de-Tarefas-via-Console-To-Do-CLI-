@@ -26,7 +26,7 @@ public class TarefaItem
         }
     }
 
-    public bool Concluida { get; set; }
+    public bool Concluida { get; private set; }
     public PrioridadeTarefa Prioridade { get; set; } = PrioridadeTarefa.Media;
 
     public string Categoria
@@ -37,10 +37,7 @@ public class TarefaItem
 
     public DateOnly? DataLimite { get; set; }
 
-    public bool EstaAtrasada =>
-        !Concluida &&
-        DataLimite.HasValue &&
-        DataLimite.Value < DateOnly.FromDateTime(DateTime.Today);
+    public bool EstaAtrasada => EstaAtrasadaEm(DateOnly.FromDateTime(DateTime.Today));
 
     public TarefaItem() { }
 
@@ -58,6 +55,21 @@ public class TarefaItem
         Categoria = categoria;
         DataLimite = dataLimite;
         Concluida = concluida;
+    }
+
+    public bool EstaAtrasadaEm(DateOnly dataReferencia) =>
+        !Concluida && DataLimite.HasValue && DataLimite.Value < dataReferencia;
+
+    public void MarcarComoConcluida() => Concluida = true;
+
+    public void Reabrir() => Concluida = false;
+
+    public void AdiarPara(DateOnly novaDataLimite)
+    {
+        if (DataLimite.HasValue && novaDataLimite < DataLimite.Value)
+            throw new ArgumentException("A nova data limite não pode ser anterior à data atual.", nameof(novaDataLimite));
+
+        DataLimite = novaDataLimite;
     }
 
     public override string ToString()
