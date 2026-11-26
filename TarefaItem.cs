@@ -1,16 +1,29 @@
+using System.Text;
+
 namespace TodoCli;
 
 public class TarefaItem
 {
+    private int _id;
     private string _titulo = string.Empty;
     private string _categoria = "Geral";
 
-    public int Id { get; set; }
+    public int Id
+    {
+        get => _id;
+        set => _id = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "O ID não pode ser negativo.");
+    }
 
     public string Titulo
     {
         get => _titulo;
-        set => _titulo = value?.Trim() ?? string.Empty;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentException("O título da tarefa é obrigatório.", nameof(value));
+
+            _titulo = value.Trim();
+        }
     }
 
     public bool Concluida { get; set; }
@@ -49,12 +62,16 @@ public class TarefaItem
 
     public override string ToString()
     {
-        string marcador = Concluida ? "[X]" : "[ ]";
-        string prazoTexto = DataLimite.HasValue
-            ? $" | Prazo: {DataLimite.Value:dd/MM/yyyy}"
-            : string.Empty;
-        string alertaAtraso = EstaAtrasada ? " [ATRASADA]" : string.Empty;
+        var sb = new StringBuilder();
+        sb.Append(Concluida ? "[X]" : "[ ]");
+        sb.Append($" #{Id} [{Prioridade}] ({Categoria}) - {Titulo}");
 
-        return $"{marcador} #{Id} [{Prioridade}] ({Categoria}) - {Titulo}{prazoTexto}{alertaAtraso}";
+        if (DataLimite.HasValue)
+            sb.Append($" | Prazo: {DataLimite.Value:dd/MM/yyyy}");
+
+        if (EstaAtrasada)
+            sb.Append(" [ATRASADA]");
+
+        return sb.ToString();
     }
 }
