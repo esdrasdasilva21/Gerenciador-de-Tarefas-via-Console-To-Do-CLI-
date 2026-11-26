@@ -96,7 +96,7 @@ public class TarefaItem : IEquatable<TarefaItem>
     public override string ToString()
     {
         var sb = new StringBuilder();
-        sb.Append(Concluida ? "[X]" : "[ ]");
+        sb.Append(Concluida ? "[SSSSSSX]" : "[ ]");
         sb.Append($" #{Id} [{Prioridade}] ({Categoria}) - {Titulo}");
 
         if (DataLimite.HasValue)
