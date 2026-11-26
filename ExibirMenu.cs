@@ -1,34 +1,61 @@
-record ResumoTarefas(int Total, int Concluidas, int Pendentes, int Atrasadas)
+public sealed record ResumoTarefas(
+    int Total,
+    int Concluidas,
+    int Pendentes,
+    int Atrasadas)
 {
-    public double PercentualConcluido => Total > 0 ? (Concluidas * 100.0) / Total : 0;
+    public double PercentualConcluido =>
+        Total == 0 ? 0d : Math.Round((Concluidas * 100.0) / Total, 1);
 
-    public static ResumoTarefas Calcular(IEnumerable<TarefaItem>? tarefas)
+    public static ResumoTarefas APartirDe(IEnumerable<TarefaItem>? tarefas)
     {
         if (tarefas is null)
-            return new ResumoTarefas(0, 0, 0, 0);
+            return Vazio;
 
-        int total = 0, concluidas = 0, pendentes = 0, atrasadas = 0;
+        int total = 0;
+        int concluidas = 0;
+        int pendentes = 0;
+        int atrasadas = 0;
 
-        foreach (var t in tarefas)
+        foreach (var tarefa in tarefas)
         {
-            if (t is null) continue;
+            if (tarefa is null)
+                continue;
+
             total++;
 
-            if (t.Concluida) concluidas++;
-            else if (t.EstaAtrasada) atrasadas++;
-            else pendentes++;
+            if (tarefa.Concluida)
+                concluidas++;
+            else if (tarefa.EstaAtrasada)
+                atrasadas++;
+            else
+                pendentes++;
         }
 
         return new ResumoTarefas(total, concluidas, pendentes, atrasadas);
     }
+
+    public static ResumoTarefas Vazio => new(0, 0, 0, 0);
 }
 
-static void ExibirResumo(IEnumerable<TarefaItem>? tarefas)
+public static class TarefasResumoPresenter
 {
-    var resumo = ResumoTarefas.Calcular(tarefas);
+    public static void ExibirResumo(
+        IEnumerable<TarefaItem>? tarefas,
+        TextWriter? saida = null)
+    {
+        var writer = saida ?? Console.Out;
+        var resumo = ResumoTarefas.APartirDe(tarefas);
 
-    Console.WriteLine(
-        $"\nResumo: {resumo.Concluidas}/{resumo.Total} concluídas ({resumo.PercentualConcluido:0.#}%) " +
-        $"| {resumo.Pendentes} pendente(s) | {resumo.Atrasadas} atrasada(s)"
-    );
+        if (resumo.Total == 0)
+        {
+            writer.WriteLine("\nResumo: nenhuma tarefa cadastrada.");
+            return;
+        }
+
+        writer.WriteLine(
+            $"\nResumo: {resumo.Concluidas}/{resumo.Total} concluídas ({resumo.PercentualConcluido:0.#}%) " +
+            $"| Pendentes: {resumo.Pendentes} | Atrasadas: {resumo.Atrasadas}"
+        );
+    }
 }
