@@ -53,3 +53,16 @@ public interface IRepositorioTarefas
     IReadOnlyList<TarefaItem> Carregar();
     void Salvar(IEnumerable<TarefaItem> tarefas);
 }
+
+
+public void Salvar(IEnumerable<TarefaItem> tarefas)
+    {
+        ArgumentNullException.ThrowIfNull(tarefas);
+        GarantirDiretorioExiste();
+
+        string caminhoTemp = $"{_caminhoArquivo}.{Guid.NewGuid():N}.tmp";
+        string json = JsonSerializer.Serialize(tarefas, _opcoesJson);
+
+        File.WriteAllText(caminhoTemp, json);
+        File.Move(caminhoTemp, _caminhoArquivo, overwrite: true);
+    }
