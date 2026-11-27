@@ -1,23 +1,21 @@
 namespace TodoCli;
 
-public sealed record TarefaItem(
-    Guid Id,
-    string Titulo,
-    bool Concluida,
-    DateTimeOffset CriadaEm)
+public enum ResultadoOperacao
 {
-    public static TarefaItem Criar(string titulo, DateTimeOffset? agora = null)
-    {
-        if (string.IsNullOrWhiteSpace(titulo))
-            throw new ArgumentException("O título da tarefa é obrigatório.", nameof(titulo));
+    Sucesso,
+    NaoEncontrado,
+    Conflito
+}
 
-        return new TarefaItem(
-            Id: Guid.NewGuid(),
-            Titulo: titulo.Trim(),
-            Concluida: false,
-            CriadaEm: agora ?? DateTimeOffset.UtcNow);
-    }
+public interface IRepositorioTarefas
+{
+    Task<IReadOnlyList<TarefaItem>> ListarAsync(
+        bool? apenasConcluidas = null,
+        string? termoBusca = null,
+        CancellationToken cancellationToken = default);
 
-    public TarefaItem Concluir() => this with { Concluida = true };
-    public TarefaItem Reabrir() => this with { Concluida = false };
+    Task<TarefaItem?> ObterPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ResultadoOperacao> AdicionarAsync(TarefaItem tarefa, CancellationToken cancellationToken = default);
+    Task<ResultadoOperacao> AtualizarAsync(TarefaItem tarefa, CancellationToken cancellationToken = default);
+    Task<bool> RemoverAsync(Guid id, CancellationToken cancellationToken = default);
 }
