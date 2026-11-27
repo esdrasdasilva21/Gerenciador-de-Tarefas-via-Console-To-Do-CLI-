@@ -1,41 +1,49 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace TodoCli;
 
 public class RepositorioTarefas : IRepositorioTarefas
 {
     private readonly string _caminhoArquivo;
-    private readonly JsonSerializerOptions _opcoesJson;
+    private static readonly JsonSerializerOptions _opcoesJson = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 
     public RepositorioTarefas(string caminhoArquivo = "tarefas.json")
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(caminhoArquivo);
         _caminhoArquivo = caminhoArquivo;
-        _opcoesJson = new JsonSerializerOptions
-        {
-            WriteIndented = true
-        };
     }
 
     public List<TarefaItem> Carregar()
     {
-        if (!File.Exists(_caminhoArquivo))
-        {
-            return new List<TarefaItem>();
-        }
+        if (!File.Exists(_caminhoArquivo)) return [];
 
         string json = File.ReadAllText(_caminhoArquivo);
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return new List<TarefaItem>();
-        }
+        if (string.IsNullOrWhiteSpace(json)) return [];
 
-        return JsonSerializer.Deserialize<List<TarefaItem>>(json, _opcoesJson)
-               ?? new List<TarefaItem>();
+        return JsonSerializer.Deserialize<List<TarefaItem>>(json, _opcoesJson) ?? [];
     }
 
     public void Salvar(List<TarefaItem> tarefas)
     {
+        ArgumentNullException.ThrowIfNull(tarefas);
+        GarantirDiretorioExiste();
+
         string json = JsonSerializer.Serialize(tarefas, _opcoesJson);
         File.WriteAllText(_caminhoArquivo, json);
+    }
+
+    private void GarantirDiretorioExiste()
+    {
+        string? diretorio = Path.GetDirectoryName(_caminhoArquivo);
+        if (!string.IsNullOrEmpty(diretorio))
+        {
+            Directory.CreateDirectory(diretorio);
+        }
     }
 }
