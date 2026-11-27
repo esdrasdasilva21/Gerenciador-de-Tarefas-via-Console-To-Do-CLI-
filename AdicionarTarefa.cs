@@ -1,5 +1,1 @@
-public sealed record NovaTarefaInput(
-    string Titulo,
-    PrioridadeTarefa Prioridade,
-    string Categoria,
-    DateOnly? DataLimite);
+int proximoId = tarefas.Count > 0 ? tarefas.Max(t => t.Id) + 1 : 1;
