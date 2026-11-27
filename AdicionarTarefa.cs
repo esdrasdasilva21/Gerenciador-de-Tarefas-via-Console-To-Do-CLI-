@@ -1,19 +1,24 @@
-static void AdicionarTarefa(List<TarefaItem> tarefas, ref int proximoId)
+PrioridadeTarefa prioridade = entradaPrioridade?.Trim() switch
 {
-    ArgumentNullException.ThrowIfNull(tarefas);
+    "" or "2" => PrioridadeTarefa.Media,
+    "1" => PrioridadeTarefa.Baixa,
+    "3" => PrioridadeTarefa.Alta,
+    _ => PrioridadeTarefa.Media
+};
 
-    Console.Write("Digite o título da nova tarefa: ");
-    string? titulo = Console.ReadLine();
-
-    if (string.IsNullOrWhiteSpace(titulo))
+if (!string.IsNullOrWhiteSpace(entradaData))
+{
+    if (DateOnly.TryParseExact(
+        entradaData.Trim(),
+        ["dd/MM/yyyy", "yyyy-MM-dd"],
+        CultureInfo.InvariantCulture,
+        DateTimeStyles.None,
+        out DateOnly dataConvertida))
     {
-        Console.WriteLine("O título não pode ficar vazio.");
-        return;
+        dataLimite = dataConvertida;
     }
-
-    // ... restante do fluxo ...
-
-    tarefas.Add(new TarefaItem(proximoId, titulo.Trim(), prioridade, categoria, dataLimite));
-    proximoId++;
-    Console.WriteLine($"Tarefa adicionada na categoria \"{categoria}\"!");
+    else
+    {
+        Console.WriteLine("Data inválida. A tarefa será salva sem data limite.");
+    }
 }
