@@ -1,24 +1,23 @@
-PrioridadeTarefa prioridade = entradaPrioridade?.Trim() switch
+private static PrioridadeTarefa LerPrioridade()
 {
-    "" or "2" => PrioridadeTarefa.Media,
-    "1" => PrioridadeTarefa.Baixa,
-    "3" => PrioridadeTarefa.Alta,
-    _ => PrioridadeTarefa.Media
-};
+    while (true)
+    {
+        Console.Write("Prioridade (1 - Baixa, 2 - Média, 3 - Alta) [padrão 2]: ");
+        string? entrada = Console.ReadLine()?.Trim();
 
-if (!string.IsNullOrWhiteSpace(entradaData))
-{
-    if (DateOnly.TryParseExact(
-        entradaData.Trim(),
-        ["dd/MM/yyyy", "yyyy-MM-dd"],
-        CultureInfo.InvariantCulture,
-        DateTimeStyles.None,
-        out DateOnly dataConvertida))
-    {
-        dataLimite = dataConvertida;
-    }
-    else
-    {
-        Console.WriteLine("Data inválida. A tarefa será salva sem data limite.");
+        PrioridadeTarefa? prioridade = entrada switch
+        {
+            "" or "2" => PrioridadeTarefa.Media,
+            "1" => PrioridadeTarefa.Baixa,
+            "3" => PrioridadeTarefa.Alta,
+            _ => null
+        };
+
+        if (prioridade is not null)
+        {
+            return prioridade.Value;
+        }
+
+        Console.WriteLine("Opção inválida. Digite 1, 2, 3 ou pressione Enter.");
     }
 }
