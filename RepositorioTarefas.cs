@@ -47,3 +47,9 @@ public class RepositorioTarefas : IRepositorioTarefas
         }
     }
 }
+
+public interface IRepositorioTarefas
+{
+    IReadOnlyList<TarefaItem> Carregar();
+    void Salvar(IEnumerable<TarefaItem> tarefas);
+}
