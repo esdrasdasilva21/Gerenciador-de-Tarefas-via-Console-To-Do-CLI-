@@ -1,24 +1,16 @@
 namespace TodoCli;
 
-public interface IRepositorioTarefas
+public enum PrioridadeTarefa
 {
-    Task<ResultadoConsulta<TarefaItem>> ListarAsync(
-        FiltroTarefas? filtro = null,
-        CancellationToken cancellationToken = default);
-
-    Task<TarefaItem?> ObterPorIdAsync(
-        Guid id,
-        CancellationToken cancellationToken = default);
-
-    Task<ResultadoOperacao> AdicionarAsync(
-        TarefaItem tarefa,
-        CancellationToken cancellationToken = default);
-
-    Task<ResultadoOperacao> AtualizarAsync(
-        TarefaItem tarefa,
-        CancellationToken cancellationToken = default);
-
-    Task<ResultadoOperacao> RemoverAsync(
-        Guid id,
-        CancellationToken cancellationToken = default);
+    Baixa = 0,
+    Media = 1,
+    Alta = 2
 }
+
+public sealed record TarefaItem(
+    Guid Id,
+    string Titulo,
+    bool Concluida,
+    PrioridadeTarefa Prioridade,
+    DateTimeOffset CriadaEm,
+    DateTimeOffset? ConcluidaEm);
