@@ -1,16 +1,16 @@
 namespace TodoCli;
 
-public enum PrioridadeTarefa
+public enum OrdenacaoTarefa
 {
-    Baixa = 0,
-    Media = 1,
-    Alta = 2
+    CriacaoDesc,
+    CriacaoAsc,
+    PrioridadeDesc,
+    TituloAsc
 }
 
-public sealed record TarefaItem(
-    Guid Id,
-    string Titulo,
-    bool Concluida,
-    PrioridadeTarefa Prioridade,
-    DateTimeOffset CriadaEm,
-    DateTimeOffset? ConcluidaEm);
+public sealed record FiltroTarefas(
+    bool? ApenasConcluidas = null,
+    PrioridadeTarefa? PrioridadeMinima = null,
+    string? TermoBusca = null,
+    OrdenacaoTarefa OrdenarPor = OrdenacaoTarefa.CriacaoDesc,
+    int? Limite = null);
